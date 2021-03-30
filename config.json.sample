@@ -1,0 +1,7 @@
+{
+  "host" : "login.salesforce.com",
+  "clientId" : "xxxxxxxxx",
+  "clientSecret" : "xxxxxxxx",
+  "username" : "XXXX@example.com",
+  "password" : "xxxxxxxx"
+}
