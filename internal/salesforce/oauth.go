@@ -10,6 +10,10 @@ import (
 	"bitbucket.org/latonaio/salesforce-api-kube/pkg"
 )
 
+type OAuthClientIF interface {
+	GetOAuthInfo() (*OAuthInfo, error)
+}
+
 // oauthClient struct Http client to get OAuth info
 type OAuthClient struct {
 	client   *http.Client

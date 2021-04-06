@@ -32,5 +32,9 @@ func buildMetadata(metadata map[string]interface{}, body string) (map[string]int
 	if !ok {
 		return nil, errors.New("failed to convert interface{} to string")
 	}
-	return map[string]interface{}{"key": objectStr, "content": body}, nil
+	return map[string]interface{}{
+		"key": objectStr,
+		"content": body,
+		"connection_type": "response",
+	}, nil
 }

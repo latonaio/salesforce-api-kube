@@ -58,10 +58,17 @@ func main() {
 			log.Printf("got metadata from kanban")
 			log.Printf("metadata: %v\n", fromMetadata)
 
-			// Do http request to salesforce
-			body, err := salesforce.DoRequest(fromMetadata, oauthClient)
+			// Build http request to salesforce
+			req, err := salesforce.BuildRequest(fromMetadata, oauthClient)
 			if err != nil {
-				log.Printf("failed to do request: %v\n", err)
+				log.Printf("failed to build request that send to salesforce api: %v\n", err)
+				continue
+			}
+
+			// Do http request to salesforce
+			body, err := salesforce.DoRequest(req)
+			if err != nil {
+				log.Printf("failed to do request to salesforce api: %v\n", err)
 				continue
 			}
 			log.Printf("successfully do http request to salesforce")
