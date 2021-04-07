@@ -58,6 +58,12 @@ func main() {
 			log.Printf("got metadata from kanban")
 			log.Printf("metadata: %v\n", fromMetadata)
 
+			ck,ok := fromMetadata["connection_key"].(string)
+			if !ok {
+				log.Printf("invalid connection key")
+				continue
+			}
+
 			// Build http request to salesforce
 			req, err := salesforce.BuildRequest(fromMetadata, oauthClient)
 			if err != nil {
@@ -81,7 +87,7 @@ func main() {
 			}
 
 			// Write metadata to Kanban
-			if err := writeKanban(kanbanClient, toMetadata); err != nil {
+			if err := writeKanban(kanbanClient, toMetadata, ck); err != nil {
 				log.Printf("failed to write kanban: %v", err)
 				continue
 			}

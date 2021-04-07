@@ -63,24 +63,10 @@ func (c *client) Do(r *http.Request) (string, error) {
 func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*http.Request, error) {
 	sfclient := NewClient()
 
-	// Parse metadata json(Check nil and convert)
-	objectIF, ok := metadata["object"]
-	if !ok {
-		return nil, errors.New("invalid metadata: object not found")
+	method,object,err := GetMethodAndObject(metadata)
+	if err != nil {
+		return nil, err
 	}
-	object, ok := objectIF.(string)
-	if !ok {
-		return nil, errors.New("failed to convert interface{} to string")
-	}
-	methodIF, ok := metadata["method"]
-	if !ok {
-		return nil, errors.New("invalid metadata: method not found")
-	}
-	method, ok := methodIF.(string)
-	if !ok {
-		return nil, errors.New("failed to convert interface{} to string")
-	}
-	method = strings.ToLower(method) // salesforce api only accepts lowercase methods.
 
 	// Get InstanceURL and AccessToken(Bearer)
 	info, err := oauthClient.GetOAuthInfo()
@@ -150,4 +136,27 @@ func DoRequest(req *http.Request) (string, error) {
 		return "", fmt.Errorf("failed to fetch response: %v", err)
 	}
 	return respBody, nil
+}
+
+func GetMethodAndObject(metadata map[string]interface{}) (string,string,error){
+	// Parse metadata json(Check nil and convert)
+	objectIF, ok := metadata["object"]
+	if !ok {
+		return "","", errors.New("invalid metadata: object not found")
+	}
+	object, ok := objectIF.(string)
+	if !ok {
+		return "","", errors.New("failed to convert interface{} to string")
+	}
+	methodIF, ok := metadata["method"]
+	if !ok {
+		return "","", errors.New("invalid metadata: method not found")
+	}
+	method, ok := methodIF.(string)
+	if !ok {
+		return "","", errors.New("failed to convert interface{} to string")
+	}
+	method = strings.ToLower(method) // salesforce api only accepts lowercase methods.
+
+	return method,object,nil
 }

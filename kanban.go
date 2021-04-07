@@ -1,18 +1,18 @@
 package main
 
 import (
+	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
 	"errors"
 	"fmt"
-
-	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
 )
 
 const msName = "salesforce-api-kube"
 
-func writeKanban(kanbanClient msclient.MicroserviceClient, data map[string]interface{}) error {
+func writeKanban(kanbanClient msclient.MicroserviceClient, data map[string]interface{},connectionKey string) error {
 	var options []msclient.Option
 	options = append(options, msclient.SetMetadata(data))
 	options = append(options, msclient.SetProcessNumber(kanbanClient.GetProcessNumber()))
+	options = append(options,msclient.SetConnectionKey(connectionKey))
 	req, err := msclient.NewOutputData(options...)
 	if err != nil {
 		return fmt.Errorf("failed to construct output request: %v", err)
