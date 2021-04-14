@@ -58,7 +58,7 @@ func main() {
 			log.Printf("got metadata from kanban")
 			log.Printf("metadata: %v\n", fromMetadata)
 
-			ck,ok := fromMetadata["connection_key"].(string)
+			ck, ok := fromMetadata["connection_key"].(string)
 			if !ok {
 				log.Printf("invalid connection key")
 				continue
@@ -92,6 +92,14 @@ func main() {
 				continue
 			}
 			log.Printf("write metadata to kanban")
+			if _, ok := toMetadata["content"]; ok {
+				logMetadata := toMetadata
+				logMetadata["content"] = ""
+				log.Printf("metadata: %v\n", logMetadata)
+			} else {
+				log.Printf("metadata: %v\n", toMetadata)
+			}
+			log.Printf("write metadata to kanban: connection_key: %s", ck)
 			log.Printf("metadata: %v\n", toMetadata)
 		}
 	}

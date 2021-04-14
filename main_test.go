@@ -135,6 +135,21 @@ func TestBuildRequest(t *testing.T) {
 				header,
 			),
 		},
+		{
+			map[string]interface{}{
+				"method": "put",
+				"object": "ContractPDF",
+				"path_param": "0000",
+				"query_params": map[string]string{"pdfName": "aaaa_0000.pdf"},
+				"body":   `xxx`,
+			},
+			NewRequest(t,
+				"put",
+				mockInstanceUrl+"/services/apexrest/ContractPDF/doPutContractPDF/0000?pdfName=aaaa_0000.pdf",
+				bytes.NewBufferString(`xxx`),
+				header,
+			),
+		},
 	}
 	for i, tt := range tests {
 		oauthClient, err := NewMockOAuthClient()

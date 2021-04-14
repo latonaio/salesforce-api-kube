@@ -100,14 +100,16 @@ func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*
 	}
 	if queryParamsIF, exist := metadata["query_params"]; exist {
 		log.Printf("query_params is exist: %v\n", queryParamsIF)
+		log.Printf("query_params is exist: %T\n", queryParamsIF)
 		queryParams, ok := queryParamsIF.(map[string]string)
 		if !ok {
 			return nil, errors.New("failed to convert query_params to map[string]string")
 		}
+		q := u.Query()
 		for k, v := range queryParams {
-			u.Query().Set(k, v)
+			q.Set(k, v)
 		}
-		u.RawQuery = u.Query().Encode()
+		u.RawQuery = q.Encode()
 	}
 
 	var body io.Reader
