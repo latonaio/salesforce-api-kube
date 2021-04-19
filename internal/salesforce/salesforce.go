@@ -2,6 +2,7 @@ package salesforce
 
 import (
 	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -99,15 +100,15 @@ func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*
 		u.Path = path.Join(u.Path, pathParam)
 	}
 	if queryParamsIF, exist := metadata["query_params"]; exist {
-		log.Printf("query_params is exist: %v\n", queryParamsIF)
-		log.Printf("query_params is exist: %T\n", queryParamsIF)
-		queryParams, ok := queryParamsIF.(map[string]string)
+		log.Printf("query_params is exist: %v type: %T\n", queryParamsIF, queryParamsIF)
+		// data-interfaceはmap[string]stringで渡しているが、map[string]interface{}で渡ってきている
+		queryParams, ok := queryParamsIF.(map[string]interface{})
 		if !ok {
-			return nil, errors.New("failed to convert query_params to map[string]string")
+			return nil, errors.New("failed to convert query_params to map[string]interface{}")
 		}
 		q := u.Query()
 		for k, v := range queryParams {
-			q.Set(k, v)
+			q.Set(k, v.(string))
 		}
 		u.RawQuery = q.Encode()
 	}
@@ -118,6 +119,14 @@ func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*
 		bodyStr, ok := bodyIF.(string)
 		if !ok {
 			return nil, errors.New("failed to convert body to string")
+		}
+		if metadata["is_body_base64"] == true {
+			decode, err := base64.StdEncoding.DecodeString(bodyStr)
+			if err != nil {
+				return nil, errors.New("failed to decode body string to base64")
+			}
+			log.Printf("successfully decode body")
+			bodyStr = string(decode)
 		}
 		body = bytes.NewBufferString(bodyStr)
 	}

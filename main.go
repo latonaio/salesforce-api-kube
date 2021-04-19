@@ -92,6 +92,7 @@ func main() {
 				continue
 			}
 			log.Printf("write metadata to kanban")
+			log.Printf("write metadata to kanban: connection_key: %s", ck)
 			if _, ok := toMetadata["content"]; ok {
 				logMetadata := toMetadata
 				logMetadata["content"] = ""
@@ -99,8 +100,6 @@ func main() {
 			} else {
 				log.Printf("metadata: %v\n", toMetadata)
 			}
-			log.Printf("write metadata to kanban: connection_key: %s", ck)
-			log.Printf("metadata: %v\n", toMetadata)
 		}
 	}
 END:
