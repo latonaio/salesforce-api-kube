@@ -8,11 +8,11 @@ import (
 
 const msName = "salesforce-api-kube"
 
-func writeKanban(kanbanClient msclient.MicroserviceClient, data map[string]interface{},connectionKey string) error {
+func writeKanban(kanbanClient msclient.MicroserviceClient, data map[string]interface{}, connectionKey string) error {
 	var options []msclient.Option
 	options = append(options, msclient.SetMetadata(data))
 	options = append(options, msclient.SetProcessNumber(kanbanClient.GetProcessNumber()))
-	options = append(options,msclient.SetConnectionKey(connectionKey))
+	options = append(options, msclient.SetConnectionKey(connectionKey))
 	req, err := msclient.NewOutputData(options...)
 	if err != nil {
 		return fmt.Errorf("failed to construct output request: %v", err)
@@ -32,9 +32,19 @@ func buildMetadata(metadata map[string]interface{}, body string) (map[string]int
 	if !ok {
 		return nil, errors.New("failed to convert interface{} to string")
 	}
+	pathParam, ok := metadata["path_param"]
+	if !ok {
+		pathParam = ""
+	}
+	queryParams, ok := metadata["query_params"]
+	if !ok {
+		queryParams = ""
+	}
 	return map[string]interface{}{
-		"key": objectStr,
-		"content": body,
+		"key":             objectStr,
+		"content":         body,
+		"path_param":      pathParam,
+		"query_params":    queryParams,
 		"connection_type": "response",
 	}, nil
 }

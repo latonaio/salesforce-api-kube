@@ -48,58 +48,63 @@ func main() {
 			if k == nil {
 				continue
 			}
+			limit := make(chan struct{},5)
+			go func(k *msclient.WrapKanban) {
+				limit <- struct{}{}
+				// Get metadata from Kanban
+				fromMetadata, err := k.GetMetadataByMap()
+				if err != nil {
+					log.Printf("failed to get metadata: %v", err)
+					return
+				}
+				log.Printf("got metadata from kanban")
+				log.Printf("metadata: %v\n", fromMetadata)
 
-			// Get metadata from Kanban
-			fromMetadata, err := k.GetMetadataByMap()
-			if err != nil {
-				log.Printf("failed to get metadata: %v", err)
-				continue
-			}
-			log.Printf("got metadata from kanban")
-			log.Printf("metadata: %v\n", fromMetadata)
+				ck, ok := fromMetadata["connection_key"].(string)
+				if !ok {
+					log.Printf("invalid connection key")
+					return
+				}
+				// Build http request to salesforce
+				req, err := salesforce.BuildRequest(fromMetadata, oauthClient)
+				if err != nil {
+					log.Printf("failed to build request that send to salesforce api: %v\n", err)
+					return
+				}
 
-			ck, ok := fromMetadata["connection_key"].(string)
-			if !ok {
-				log.Printf("invalid connection key")
-				continue
-			}
+				// Do http request to salesforce
+				body, err := salesforce.DoRequest(req)
+				if err != nil {
+					log.Printf("failed to do request to salesforce api: %v\n", err)
+					return
+				}
+				log.Printf("successfully do http request to salesforce")
 
-			// Build http request to salesforce
-			req, err := salesforce.BuildRequest(fromMetadata, oauthClient)
-			if err != nil {
-				log.Printf("failed to build request that send to salesforce api: %v\n", err)
-				continue
-			}
+				// Build metadata for Kanban
+				toMetadata, err := buildMetadata(fromMetadata, body)
+				if err != nil {
+					log.Printf("failed to build metadata to send: %v", err)
+					return
+				}
 
-			// Do http request to salesforce
-			body, err := salesforce.DoRequest(req)
-			if err != nil {
-				log.Printf("failed to do request to salesforce api: %v\n", err)
-				continue
-			}
-			log.Printf("successfully do http request to salesforce")
+				// Write metadata to Kanban
+				if err := writeKanban(kanbanClient, toMetadata, ck); err != nil {
+					log.Printf("failed to write kanban: %v", err)
+					return
+				}
+				log.Printf("write metadata to kanban")
+				log.Printf("write metadata to kanban: connection_key: %s", ck)
+				if _, ok := toMetadata["content"]; ok {
+					logMetadata := toMetadata
+					logMetadata["content"] = ""
+					log.Printf("metadata: %v\n", logMetadata)
+				} else {
+					log.Printf("metadata: %v\n", toMetadata)
+				}
+				<-limit
+				return
+			}(k)
 
-			// Build metadata for Kanban
-			toMetadata, err := buildMetadata(fromMetadata, body)
-			if err != nil {
-				log.Printf("failed to build metadata to send: %v", err)
-				continue
-			}
-
-			// Write metadata to Kanban
-			if err := writeKanban(kanbanClient, toMetadata, ck); err != nil {
-				log.Printf("failed to write kanban: %v", err)
-				continue
-			}
-			log.Printf("write metadata to kanban")
-			log.Printf("write metadata to kanban: connection_key: %s", ck)
-			if _, ok := toMetadata["content"]; ok {
-				logMetadata := toMetadata
-				logMetadata["content"] = ""
-				log.Printf("metadata: %v\n", logMetadata)
-			} else {
-				log.Printf("metadata: %v\n", toMetadata)
-			}
 		}
 	}
 END:
