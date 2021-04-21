@@ -1,9 +1,10 @@
 package main
 
 import (
-	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
 	"errors"
 	"fmt"
+
+	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
 )
 
 const msName = "salesforce-api-kube"
@@ -40,11 +41,17 @@ func buildMetadata(metadata map[string]interface{}, body string) (map[string]int
 	if !ok {
 		queryParams = ""
 	}
+	data, ok := metadata["metadata"]
+	if !ok {
+		data = "" // void
+	}
+
 	return map[string]interface{}{
 		"key":             objectStr,
 		"content":         body,
 		"path_param":      pathParam,
 		"query_params":    queryParams,
+		"metadata":        data,
 		"connection_type": "response",
 	}, nil
 }

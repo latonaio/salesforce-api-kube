@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"bitbucket.org/latonaio/aion-core/pkg/go-client/msclient"
@@ -38,8 +39,11 @@ func main() {
 	log.Printf("successful get kanban channel\n")
 
 	signalCh := make(chan os.Signal, 1)
+	limit := make(chan struct{},5)
+	wg := new(sync.WaitGroup)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	for {
+		wg.Add(1)
 		select {
 		case s := <-signalCh:
 			fmt.Printf("received signal: %s", s.String())
@@ -48,7 +52,6 @@ func main() {
 			if k == nil {
 				continue
 			}
-			limit := make(chan struct{},5)
 			go func(k *msclient.WrapKanban) {
 				limit <- struct{}{}
 				// Get metadata from Kanban
@@ -58,7 +61,7 @@ func main() {
 					return
 				}
 				log.Printf("got metadata from kanban")
-				log.Printf("metadata: %v\n", fromMetadata)
+				log.Debugf("metadata: %v\n", fromMetadata)
 
 				ck, ok := fromMetadata["connection_key"].(string)
 				if !ok {
@@ -97,15 +100,17 @@ func main() {
 				if _, ok := toMetadata["content"]; ok {
 					logMetadata := toMetadata
 					logMetadata["content"] = ""
-					log.Printf("metadata: %v\n", logMetadata)
+					log.Debugf("metadata: %v\n", logMetadata)
 				} else {
-					log.Printf("metadata: %v\n", toMetadata)
+					log.Debugf("metadata: %v\n", toMetadata)
 				}
 				<-limit
+				wg.Done()
 				return
 			}(k)
 
 		}
 	}
 END:
+	wg.Wait()
 }
