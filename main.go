@@ -40,6 +40,7 @@ func main() {
 
 	signalCh := make(chan os.Signal, 1)
 	limit := make(chan struct{},5)
+	errCh := make(chan error,1)
 	wg := new(sync.WaitGroup)
 	signal.Notify(signalCh, syscall.SIGTERM)
 	for {
@@ -48,52 +49,48 @@ func main() {
 		case s := <-signalCh:
 			fmt.Printf("received signal: %s", s.String())
 			goto END
+		case err := <- errCh:
+			log.Errorf("error: %v", err)
 		case k := <-kanbanCh:
 			if k == nil {
 				continue
 			}
+			limit <- struct{}{}
 			go func(k *msclient.WrapKanban) {
-				limit <- struct{}{}
 				// Get metadata from Kanban
 				fromMetadata, err := k.GetMetadataByMap()
 				if err != nil {
-					log.Printf("failed to get metadata: %v", err)
-					return
+					errCh <- fmt.Errorf("failed to get metadata: %v", err)
 				}
 				log.Printf("got metadata from kanban")
 				log.Debugf("metadata: %v\n", fromMetadata)
 
 				ck, ok := fromMetadata["connection_key"].(string)
 				if !ok {
-					log.Printf("invalid connection key")
-					return
+					errCh <- fmt.Errorf("invalid connection key")
 				}
 				// Build http request to salesforce
 				req, err := salesforce.BuildRequest(fromMetadata, oauthClient)
 				if err != nil {
-					log.Printf("failed to build request that send to salesforce api: %v\n", err)
-					return
+					errCh <- fmt.Errorf("failed to build request that send to salesforce api: %v\n", err)
 				}
 
 				// Do http request to salesforce
 				body, err := salesforce.DoRequest(req)
 				if err != nil {
-					log.Printf("failed to do request to salesforce api: %v\n", err)
-					return
+					errCh <- fmt.Errorf("failed to do request to salesforce api: %v\n", err)
 				}
 				log.Printf("successfully do http request to salesforce")
 
 				// Build metadata for Kanban
 				toMetadata, err := buildMetadata(fromMetadata, body)
 				if err != nil {
-					log.Printf("failed to build metadata to send: %v", err)
-					return
+					errCh <- fmt.Errorf("failed to build metadata to send: %v", err)
 				}
 
 				// Write metadata to Kanban
 				if err := writeKanban(kanbanClient, toMetadata, ck); err != nil {
-					log.Printf("failed to write kanban: %v", err)
-					return
+					errCh <- fmt.Errorf("failed to write kanban: %v", err)
 				}
 				log.Printf("write metadata to kanban")
 				log.Printf("write metadata to kanban: connection_key: %s", ck)
@@ -106,7 +103,6 @@ func main() {
 				}
 				<-limit
 				wg.Done()
-				return
 			}(k)
 
 		}
