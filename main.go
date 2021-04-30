@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bitbucket.org/latonaio/aion-core/proto/kanbanpb"
 	"context"
 	"fmt"
 	"os"
@@ -17,7 +18,7 @@ func main() {
 	// Create Kanban client
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	kanbanClient, err := msclient.NewKanbanClient(ctx, msName)
+	kanbanClient, err := msclient.NewKanbanClient(ctx, msName, kanbanpb.InitializeType_START_SERVICE)
 	if err != nil {
 		log.Fatalf("failed to get kanban client: %v", err)
 	}
@@ -32,10 +33,7 @@ func main() {
 	log.Printf("successful construct OAuth client")
 
 	// Get Kanban channel by Kanban client
-	kanbanCh, err := kanbanClient.GetKanbanCh()
-	if err != nil {
-		log.Fatalf("failed to get kanban channel: %v", err)
-	}
+	kanbanCh := kanbanClient.GetKanbanCh()
 	log.Printf("successful get kanban channel\n")
 
 	signalCh := make(chan os.Signal, 1)
@@ -53,13 +51,13 @@ func main() {
 			}
 			limit <- struct{}{}
 			wg.Add(1)
-			go func(k *msclient.WrapKanban) {
+			go func(k *kanbanpb.StatusKanban) {
 				defer func() {
 					<-limit
 					wg.Done()
 				}()
 				// Get metadata from Kanban
-				fromMetadata, err := k.GetMetadataByMap()
+				fromMetadata, err := msclient.GetMetadataByMap(k)
 				if err != nil {
 					log.Errorf("failed to get metadata: %v", err)
 					return
