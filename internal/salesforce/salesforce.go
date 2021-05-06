@@ -26,7 +26,6 @@ type client struct {
 func NewClient() *client {
 	requiredHeaders := http.Header{}
 	requiredHeaders.Add("Content-Type", "application/json")
-	requiredHeaders.Add("Accept-Encoding", "gzip")
 	return &client{
 		client:          &http.Client{},
 		requiredHeaders: requiredHeaders,
