@@ -63,7 +63,7 @@ func (c *client) Do(r *http.Request) (string, error) {
 func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*http.Request, error) {
 	sfclient := NewClient()
 
-	method,object,err := GetMethodAndObject(metadata)
+	method, object, err := GetMethodAndObject(metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -103,11 +103,12 @@ func BuildRequest(metadata map[string]interface{}, oauthClient OAuthClientIF) (*
 		// data-interfaceはmap[string]stringで渡しているが、map[string]interface{}で渡ってきている
 		queryParams, ok := queryParamsIF.(map[string]interface{})
 		if !ok {
-			return nil, errors.New("failed to convert query_params to map[string]interface{}")
+			return nil, errors.New("failed to convert query_params to map[string]string")
 		}
 		q := u.Query()
 		for k, v := range queryParams {
-			q.Set(k, v.(string))
+			vv := v.(string)
+			q.Set(k, vv)
 		}
 		u.RawQuery = q.Encode()
 	}
@@ -148,25 +149,25 @@ func DoRequest(req *http.Request) (string, error) {
 	return respBody, nil
 }
 
-func GetMethodAndObject(metadata map[string]interface{}) (string,string,error){
+func GetMethodAndObject(metadata map[string]interface{}) (string, string, error) {
 	// Parse metadata json(Check nil and convert)
 	objectIF, ok := metadata["object"]
 	if !ok {
-		return "","", errors.New("invalid metadata: object not found")
+		return "", "", errors.New("invalid metadata: object not found")
 	}
 	object, ok := objectIF.(string)
 	if !ok {
-		return "","", errors.New("failed to convert interface{} to string")
+		return "", "", errors.New("failed to convert interface{} to string")
 	}
 	methodIF, ok := metadata["method"]
 	if !ok {
-		return "","", errors.New("invalid metadata: method not found")
+		return "", "", errors.New("invalid metadata: method not found")
 	}
 	method, ok := methodIF.(string)
 	if !ok {
-		return "","", errors.New("failed to convert interface{} to string")
+		return "", "", errors.New("failed to convert interface{} to string")
 	}
 	method = strings.ToLower(method) // salesforce api only accepts lowercase methods.
 
-	return method,object,nil
+	return method, object, nil
 }

@@ -24,13 +24,28 @@ func TestBuildRequest(t *testing.T) {
 	// setting header
 	header := http.Header{}
 	header.Add("Content-Type", "application/json")
-	header.Add("Accept-Encoding", "gzip")
 	header.Add("Authorization", "Bearer "+mockAccessToken)
 
 	tests := []struct {
 		fromMetadata    map[string]interface{}
 		expectedRequest *http.Request
 	}{
+		// Campaign
+		{
+			map[string]interface{}{
+				"method":         "get",
+				"object":         "Campaign",
+				"connection_key": "campaign_get",
+				"path_param":     "test_id",
+			},
+			NewRequest(t,
+				"get",
+				mockInstanceUrl+"/services/apexrest/Campaign/doGetCampaign/test_id",
+				nil,
+				header,
+			),
+		},
+
 		// Account
 		{
 			map[string]interface{}{
@@ -137,11 +152,11 @@ func TestBuildRequest(t *testing.T) {
 		},
 		{
 			map[string]interface{}{
-				"method": "put",
-				"object": "ContractPDF",
-				"path_param": "0000",
+				"method":       "put",
+				"object":       "ContractPDF",
+				"path_param":   "0000",
 				"query_params": map[string]string{"pdfName": "aaaa_0000.pdf"},
-				"body":   `xxx`,
+				"body":         `xxx`,
 			},
 			NewRequest(t,
 				"put",
