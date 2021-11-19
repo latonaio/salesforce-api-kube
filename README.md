@@ -15,7 +15,7 @@ AION
 
 ## 通信フロー  
 
-![img](assets/doc/salesforce-api-kube.png)
+![img](doc/salesforce-api-kube.png)
 
 salesforce-api-kube の通信フローは下記の通りです。  
 
