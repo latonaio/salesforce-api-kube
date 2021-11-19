@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: salesforce-api-kube
+  name: salesforce-api-kube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: salesforce-api-kube
+  strategy:
+    rollingUpdate:
+  template:
+    metadata:
+      labels:
+        run: salesforce-api-kube
+    spec:
+      hostname: salesforce-api-kube
+      containers:
+        - name: salesforce-api-kube
+          image: latonaio/salesforce-api-kube
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PORT
+              value: "9002"
+            - name: TZ
+              value: Asia/Tokyo
+          ports:
+            - containerPort: 9002
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: "200Mi"
+            requests:
+              cpu: "0.5"
+              memory: "100Mi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: salesforce-api-kube
+  name: salesforce-api-kube
+spec:
+  selector:
+    run: salesforce-api-kube
+  type: ClusterIP
+  ports:
+    - port: 9002
+      protocol: TCP
+      targetPort: 9002
